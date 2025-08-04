@@ -1,0 +1,17 @@
+app:
+  name: pkit
+  version: 0.1.0
+
+settings:
+  debug: false
+  output_format: json
+
+google:
+  auth:
+    scopes:
+      - "https://www.googleapis.com/auth/gmail.modify"
+      - "https://www.googleapis.com/auth/drive.readonly"
+      - "https://www.googleapis.com/auth/drive.readonly"
+    credentials_file: "credentials.json"
+    token_file: "token.json"
+  spam_emails_file: "spam_emails.yaml"
