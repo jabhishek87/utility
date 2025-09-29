@@ -96,10 +96,38 @@ var downloadDriveCmd = &cobra.Command{
 	},
 }
 
+var createTokenCmd = &cobra.Command{
+	Use:   "create_token [filename]",
+	Short: "Create Google API token file with specified filename",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		authService := NewAuthService(config)
+		
+		tok, err := authService.tokenFromFile()
+		if err != nil || !tok.Valid() {
+			_, err = authService.GetClient(context.Background())
+			if err != nil {
+				fmt.Printf("Authentication failed: %v\n", err)
+				os.Exit(1)
+			}
+			tok, _ = authService.tokenFromFile()
+		}
+		
+		err = authService.saveCredentialsWithToken(tok, args[0])
+		if err != nil {
+			fmt.Printf("Error creating credentials file: %v\n", err)
+			os.Exit(1)
+		}
+		
+		fmt.Printf("Credentials file created: %s\n", args[0])
+	},
+}
+
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&configPath, "config", "c", "config.yaml", "path to config file")
 	rootCmd.AddCommand(deleteSpamCmd)
 	rootCmd.AddCommand(downloadDriveCmd)
+	rootCmd.AddCommand(createTokenCmd)
 }
 
 func main() {

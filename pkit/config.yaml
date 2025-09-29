@@ -11,7 +11,8 @@ google:
     scopes:
       - "https://www.googleapis.com/auth/gmail.modify"
       - "https://www.googleapis.com/auth/drive.readonly"
-      - "https://www.googleapis.com/auth/drive.readonly"
+      - "https://www.googleapis.com/auth/photoslibrary"
+      - "https://www.googleapis.com/auth/photoslibrary.sharing"
     credentials_file: "credentials.json"
     token_file: "token.json"
   spam_emails_file: "spam_emails.yaml"

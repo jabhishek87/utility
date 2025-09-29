@@ -39,6 +39,7 @@ func trashSpamMessages(client *http.Client, config *Config) error {
 	}
 
 	user := "me"
+	totalTrashed := 0
 	for _, email := range spamEmails.SpamEmails {
 		query := fmt.Sprintf("is:unread from:%s", email)
 
@@ -61,10 +62,11 @@ func trashSpamMessages(client *http.Client, config *Config) error {
 				continue
 			}
 			trashed++
+			totalTrashed++
 		}
 
 		fmt.Printf("Trashed %d unread messages from %s\n", trashed, email)
 	}
-
+	fmt.Printf("Total Trashed %d \n", totalTrashed)
 	return nil
 }

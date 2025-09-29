@@ -31,15 +31,15 @@ func (a *AuthService) GetClient(ctx context.Context) (*http.Client, error) {
 			}
 			tok, err = a.refreshToken(config, tok)
 			if err == nil {
-				a.saveToken(tok)
-				return config.Client(ctx, tok), nil
+				// a.saveToken(tok)
+				a.saveCredentialsWithToken(tok, a.config.Google.Auth.TokenFile)
 			}
 		}
 		tok, err = a.runLocalServer()
 		if err != nil {
 			return nil, err
 		}
-		a.saveToken(tok)
+		a.saveCredentialsWithToken(tok, a.config.Google.Auth.TokenFile)
 	}
 
 	config, err := a.getOAuthConfig()
@@ -54,6 +54,7 @@ func (a *AuthService) getOAuthConfig() (*oauth2.Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to read client secret file: %v", err)
 	}
+	fmt.Printf("Using scopes: %v\n", a.config.Google.Auth.Scopes)
 	return google.ConfigFromJSON(b, a.config.Google.Auth.Scopes...)
 }
 
@@ -119,12 +120,34 @@ func (a *AuthService) refreshToken(config *oauth2.Config, token *oauth2.Token) (
 	return config.TokenSource(context.Background(), token).Token()
 }
 
-func (a *AuthService) saveToken(token *oauth2.Token) {
-	f, err := os.OpenFile(a.config.Google.Auth.TokenFile, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
+func (a *AuthService) saveCredentialsWithToken(token *oauth2.Token, filename string) error {
+	credsData, err := os.ReadFile(a.config.Google.Auth.CredentialsFile)
+	if err != nil {
+		return err
+	}
+
+	var creds map[string]interface{}
+	err = json.Unmarshal(credsData, &creds)
+	if err != nil {
+		return err
+	}
+
+	installed := creds["installed"].(map[string]interface{})
+	combined := map[string]interface{}{
+		"client_id":     installed["client_id"],
+		"client_secret": installed["client_secret"],
+		"access_token":  token.AccessToken,
+		"token_type":    token.TokenType,
+		"refresh_token": token.RefreshToken,
+		"expiry":        token.Expiry,
+		"scopes":        a.config.Google.Auth.Scopes,
+	}
+
+	f, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		fmt.Printf("Unable to cache oauth token: %v", err)
 		return
 	}
 	defer f.Close()
-	json.NewEncoder(f).Encode(token)
+	return json.NewEncoder(f).Encode(combined)
 }
